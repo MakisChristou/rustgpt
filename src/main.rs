@@ -1,7 +1,7 @@
 use futures_util::StreamExt;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{json, Deserializer, StreamDeserializer, Value};
 use std::io::Read;
 use std::io::{self, Write};
 use std::process::exit;
@@ -75,15 +75,40 @@ async fn send_gpt_request(prompt: &str, api_key: &str) {
         .expect("Failed to get response");
 
     let mut stream = response.bytes_stream();
+    let mut buffer = String::new();
+
     while let Some(item) = stream.next().await {
         match item {
             Ok(bytes) => {
-                let response_text = String::from_utf8_lossy(&bytes).to_string();
+                buffer.push_str(&String::from_utf8_lossy(&bytes));
+                let mut split = buffer.split('\n');
+                let mut remaining = String::new();
 
-                println!("Hello: ({})", response_text);
-                let gpt_response = serde_json::from_str::<GptResponse>(&response_text);
-                println!("Debug: {:?}", gpt_response.unwrap());
-                
+                for line in split {
+                    if !line.is_empty() {
+                        
+                        let line = &line[6..];
+                        println!("line: ({})", line);
+
+                        if line == "[DONE]" {
+                            break;
+                        }
+                        match serde_json::from_str::<Value>(&line) {
+                            Ok(json) => {
+                                println!("Hello: ({})", json);
+                                let gpt_response = serde_json::from_value::<GptResponse>(json);
+                                println!("Debug: {:?}", gpt_response.unwrap());
+                            }
+                            Err(e) => {
+                                eprintln!("Error reading JSON: {}", e);
+                            }
+                        }
+                    } else {
+                        remaining.push_str(line);
+                    }
+                }
+
+                buffer = remaining;
             }
             Err(e) => {
                 eprintln!("Error reading chunk: {}", e);
