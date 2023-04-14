@@ -2,11 +2,23 @@ use futures_util::StreamExt;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Deserializer, StreamDeserializer, Value};
+use tokio::time::sleep;
 use std::io::Read;
 use std::io::{self, Write};
 use std::process::exit;
+use std::time::Duration;
+use tokio::runtime::Runtime;
 
 const API_URL: &str = "https://api.openai.com/v1/chat/completions";
+
+
+async fn print_as_typing(s: &str, delay: Duration) {
+    for c in s.chars() {
+        print!("{}", c);
+        std::io::stdout().flush().unwrap();
+        sleep(delay).await;
+    }
+}
 
 #[derive(Debug, Deserialize, Serialize)]
 struct GptRequest {
@@ -77,6 +89,8 @@ async fn send_gpt_request(prompt: &str, api_key: &str) {
     let mut stream = response.bytes_stream();
     let mut buffer = String::new();
 
+    let typing_delay = Duration::from_millis(10);
+
     while let Some(item) = stream.next().await {
         match item {
             Ok(bytes) => {
@@ -88,16 +102,20 @@ async fn send_gpt_request(prompt: &str, api_key: &str) {
                     if !line.is_empty() {
                         
                         let line = &line[6..];
-                        println!("line: ({})", line);
 
                         if line == "[DONE]" {
+                            println!("");
                             break;
                         }
                         match serde_json::from_str::<Value>(&line) {
                             Ok(json) => {
-                                println!("Hello: ({})", json);
-                                let gpt_response = serde_json::from_value::<GptResponse>(json);
-                                println!("Debug: {:?}", gpt_response.unwrap());
+                                let gpt_response = serde_json::from_value::<GptResponse>(json).expect("Failed to decode GptResponse");
+                                // println!("{:?}", gpt_response.choices[0].delta.content);
+                                let msg = &gpt_response.choices[0].delta.content;
+                                match  msg{
+                                    Some(msg) => print_as_typing(msg, typing_delay).await,
+                                    None => (),
+                                }
                             }
                             Err(e) => {
                                 eprintln!("Error reading JSON: {}", e);
