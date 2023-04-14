@@ -2,6 +2,7 @@ use futures_util::StreamExt;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Deserializer, StreamDeserializer, Value};
+use std::env;
 use std::io::Read;
 use std::io::{self, Write};
 use std::process::exit;
@@ -10,6 +11,7 @@ use tokio::time::sleep;
 use ctrlc::Error;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use dotenv::dotenv;
 
 const API_URL: &str = "https://api.openai.com/v1/chat/completions";
 
@@ -216,7 +218,12 @@ async fn send_gpt_request(prompt: &str, api_key: &str, typing_delay: Duration, r
 
 #[tokio::main]
 async fn main() {
-    let api_key = "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";
+    dotenv().ok();
+    let api_key = match env::var("API_KEY") {
+        Ok(value) => value,
+        Err(_) => panic!("API_KEY must be set"),
+    };
+
     let typing_delay = Duration::from_millis(10);
 
     // Set up the signal handler
@@ -232,5 +239,5 @@ async fn main() {
     }).expect("Error setting Ctrl+C handler");
 
 
-    start_chat_loop(api_key, typing_delay, running).await ;
+    start_chat_loop(&api_key, typing_delay, running).await ;
 }
