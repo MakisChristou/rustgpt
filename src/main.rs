@@ -20,6 +20,21 @@ async fn print_as_typing(s: &str, delay: Duration) {
     }
 }
 
+
+#[derive(Debug, Deserialize)]
+struct GptError {
+    error: GptErrorResponse,
+}
+
+#[derive(Debug, Deserialize)]
+struct GptErrorResponse {
+    message: Option<String>,
+    #[serde(rename = "type")]
+    error_type: Option<String>,
+    param: Option<String>,
+    code: Option<String>,
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 struct GptRequest {
     stream: bool,
@@ -95,30 +110,52 @@ async fn send_gpt_request(prompt: &str, api_key: &str) {
         match item {
             Ok(bytes) => {
                 buffer.push_str(&String::from_utf8_lossy(&bytes));
-                let mut split = buffer.split('\n');
+                let mut split = buffer.split("data:");
                 let mut remaining = String::new();
 
-                for line in split {
-                    if !line.is_empty() {
-                        
-                        let line = &line[6..];
+                for mut line in split {
+                    let cleaned_line = line.trim();
 
-                        if line == "[DONE]" {
+                    if !cleaned_line.is_empty() {
+                        if cleaned_line == "[DONE]" {
                             println!("");
                             break;
                         }
-                        match serde_json::from_str::<Value>(&line) {
+                        match serde_json::from_str::<Value>(&cleaned_line) {
                             Ok(json) => {
-                                let gpt_response = serde_json::from_value::<GptResponse>(json).expect("Failed to decode GptResponse");
-                                // println!("{:?}", gpt_response.choices[0].delta.content);
-                                let msg = &gpt_response.choices[0].delta.content;
-                                match  msg{
-                                    Some(msg) => print_as_typing(msg, typing_delay).await,
-                                    None => (),
+                                let gpt_response = serde_json::from_value::<GptResponse>(json.clone());//.expect("Failed to decode GptResponse");
+                                
+                                match gpt_response {
+                                    Ok(gpt_response) => {
+                                        let msg = &gpt_response.choices[0].delta.content;
+                                        match  msg{
+                                            Some(msg) => print_as_typing(msg, typing_delay).await,
+                                            None => (),
+                                        }
+                                    },
+                                    Err(e) => {
+                                        // println!("Cannot decode to GptResponse {}", e);
+                                        let gpt_error = serde_json::from_value::<GptError>(json);
+                                        match gpt_error {
+                                            Ok(gpt_error) => {
+                                                match gpt_error.error.error_type {
+                                                    Some(err_type) => println!("{}",err_type),
+                                                    None => println!("An error occured"),
+                                                }
+                                                exit(0);
+                                            },
+                                            Err(e) => {
+                                                println!("Cannot decode to GptError {:?}",e);
+                                                exit(1);
+                                            }
+                                        }
+                                    }
                                 }
                             }
                             Err(e) => {
                                 eprintln!("Error reading JSON: {}", e);
+                                eprintln!("Response: {}", line);
+                                exit(1);
                             }
                         }
                     } else {
@@ -146,7 +183,7 @@ async fn send_gpt_request(prompt: &str, api_key: &str) {
 
 #[tokio::main]
 async fn main() {
-    let api_key = "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";
+    let api_key = "";
 
     loop {
         print!("〉");
