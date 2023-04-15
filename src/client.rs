@@ -1,13 +1,13 @@
-use serde::{Deserialize, Serialize};
 use futures_util::StreamExt;
 use reqwest::Client;
-use serde_json::{Value};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::io::{self, Write};
 use std::process::exit;
-use std::time::Duration;
-use tokio::time::sleep;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::time::Duration;
+use tokio::time::sleep;
 
 #[derive(Debug, Deserialize)]
 struct GptError {
@@ -66,7 +66,14 @@ pub struct Message {
     pub content: String,
 }
 
-pub async fn send_gpt_request(messages: Vec<Message>, api_key: &str, api_url: &str, typing_delay: Duration, running: &Arc<AtomicBool>, assistant_response: &mut String) {
+pub async fn send_gpt_request(
+    messages: Vec<Message>,
+    api_key: &str,
+    api_url: &str,
+    typing_delay: Duration,
+    running: &Arc<AtomicBool>,
+    assistant_response: &mut String,
+) {
     let client = Client::new();
     running.store(true, Ordering::SeqCst);
 
@@ -111,7 +118,12 @@ pub async fn send_gpt_request(messages: Vec<Message>, api_key: &str, api_url: &s
 
                                 match gpt_response {
                                     Ok(gpt_response) => {
-                                        handle_response(gpt_response, typing_delay, assistant_response).await;
+                                        handle_response(
+                                            gpt_response,
+                                            typing_delay,
+                                            assistant_response,
+                                        )
+                                        .await;
                                     }
                                     Err(e) => {
                                         handle_error(json);
@@ -145,13 +157,17 @@ pub async fn send_gpt_request(messages: Vec<Message>, api_key: &str, api_url: &s
     }
 }
 
-async fn handle_response(gpt_response: GptResponse, typing_delay: Duration,  assistant_response: &mut String){
+async fn handle_response(
+    gpt_response: GptResponse,
+    typing_delay: Duration,
+    assistant_response: &mut String,
+) {
     let msg = &gpt_response.choices[0].delta.content;
     match msg {
         Some(msg) => {
             assistant_response.push_str(msg);
             print_as_typing(msg, typing_delay).await;
-        },
+        }
         None => (),
     }
 }

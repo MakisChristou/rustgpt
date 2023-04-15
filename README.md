@@ -36,5 +36,6 @@ GPTerm can be configured in various ways. See below the different config options
 ```
 API_KEY=sk-...
 CONTEXT=true/false
+HISTORY=true/false
 ```
 
