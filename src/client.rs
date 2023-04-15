@@ -2,7 +2,7 @@ use futures_util::StreamExt;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::io::{self, Write};
+use std::io::Write;
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -15,6 +15,7 @@ struct GptError {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct GptErrorResponse {
     message: Option<String>,
     #[serde(rename = "type")]
@@ -31,7 +32,8 @@ struct GptRequest {
     temperature: f64,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(serde::Deserialize)]
+#[allow(dead_code)]
 struct GptResponse {
     id: String,
     object: String,
@@ -40,20 +42,22 @@ struct GptResponse {
     choices: Vec<Choice>,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(serde::Deserialize)]
+#[allow(dead_code)]
 struct Choice {
     delta: Delta,
     index: usize,
     finish_reason: Option<String>,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(serde::Deserialize)]
+#[allow(dead_code)]
 struct Delta {
     content: Option<String>,
     role: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 struct Usage {
     prompt_tokens: u32,
     completion_tokens: u32,
@@ -100,10 +104,10 @@ pub async fn send_gpt_request(
         match item {
             Ok(bytes) => {
                 buffer.push_str(&String::from_utf8_lossy(&bytes));
-                let mut split = buffer.split("data:");
+                let split = buffer.split("data:");
                 let mut remaining = String::new();
 
-                for mut line in split {
+                for line in split {
                     let cleaned_line = line.trim();
 
                     if !cleaned_line.is_empty() {
@@ -125,7 +129,7 @@ pub async fn send_gpt_request(
                                         )
                                         .await;
                                     }
-                                    Err(e) => {
+                                    Err(_e) => {
                                         handle_error(json);
                                     }
                                 }

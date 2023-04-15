@@ -1,8 +1,7 @@
-use chrono::{DateTime, Local};
+use chrono::Local;
 use dotenv::dotenv;
 use std::env;
-use std::io::Read;
-use std::io::{self, Write};
+
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -14,7 +13,7 @@ mod client;
 mod utils;
 
 use crate::client::{send_gpt_request, Message};
-use crate::utils::{get_log_directory, save_conversation_log};
+use crate::utils::{get_log_directory, get_user_input, save_conversation_log};
 
 async fn start_chat_loop(
     api_key: &str,
@@ -23,8 +22,6 @@ async fn start_chat_loop(
     context_mode: bool,
     store_messages: bool,
 ) {
-    println!("Welcome to gpterm!");
-
     let mut messages: Vec<Message> = Vec::new();
 
     let log_dir = match get_log_directory() {
@@ -34,38 +31,23 @@ async fn start_chat_loop(
             return;
         }
     };
-    let conversation_id = "gpterm";
+
+    let conversation_id = "history";
 
     if store_messages {
-        println!("Storing conversations in {:?}", log_dir.to_str());
+        println!("Storing conversations in {:?}", log_dir.display());
     }
 
     if context_mode {
         println!("Using context mode");
     }
 
+    println!("Welcome to gpterm!");
+
     loop {
         let mut assistant_response = String::from("");
 
-        print!("\n〉");
-        io::stdout().flush().unwrap();
-
-        let mut input = String::new();
-        let mut buffer = [0; 1];
-        loop {
-            io::stdin().read_exact(&mut buffer).unwrap();
-            let c = buffer[0] as char;
-            if c == '\n' {
-                break;
-            }
-            input.push(c);
-        }
-
-        input = input.trim().to_string();
-
-        if input.to_lowercase() == "exit" {
-            break;
-        }
+        let input = get_user_input();
 
         // Remove history if in no-context mode
         if !context_mode {
@@ -96,6 +78,7 @@ async fn start_chat_loop(
             role: String::from("user"),
             content: input,
         });
+
         send_gpt_request(
             messages.clone(),
             api_key,
@@ -175,5 +158,12 @@ async fn main() {
     })
     .expect("Error setting Ctrl+C handler");
 
-    start_chat_loop(&api_key, typing_delay, running, context_mode, store_messages).await;
+    start_chat_loop(
+        &api_key,
+        typing_delay,
+        running,
+        context_mode,
+        store_messages,
+    )
+    .await;
 }
