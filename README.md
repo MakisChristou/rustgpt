@@ -3,8 +3,6 @@ GPTerm is a yet another command-line chat GPT frontend written in Rust.
 
 [![Example Usage](https://asciinema.org/a/VGv3l7UmZ1kiSQF1d5wwVAJvk.svg)](https://asciinema.org/a/VGv3l7UmZ1kiSQF1d5wwVAJvk)
 
-
-
 ## Installation
 1. Clone the repository to your local machine.
 2. Navigate to the directory where the repository was cloned.
