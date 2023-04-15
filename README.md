@@ -1,7 +1,10 @@
 # GPTerm
 GPTerm is a yet another command-line chat GPT frontend written in Rust.
 
-[![Example Usage](https://asciinema.org/a/VGv3l7UmZ1kiSQF1d5wwVAJvk.svg)](https://asciinema.org/a/VGv3l7UmZ1kiSQF1d5wwVAJvk)
+![demo](https://user-images.githubusercontent.com/39631552/232221182-d0d8409f-ff76-4bad-b909-77c9ff44740b.gif)
+
+
+<!-- [![Example Usage](https://asciinema.org/a/VGv3l7UmZ1kiSQF1d5wwVAJvk.svg)](https://asciinema.org/a/VGv3l7UmZ1kiSQF1d5wwVAJvk) -->
 
 ## Installation
 1. Clone the repository to your local machine.
@@ -25,4 +28,13 @@ $ cargo run
 ```
 
 To exit the program simply Ctrl + C twice.
+
+
+## Configuration
+GPTerm can be configured in various ways. See below the different config options it supports.
+
+```
+API_KEY=sk-...
+CONTEXT=true/false
+```
 

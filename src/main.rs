@@ -13,15 +13,15 @@ mod client;
 
 use crate::client::{send_gpt_request, Message};
 
-async fn start_chat_loop(api_key: &str, typing_delay: Duration, running: Arc<AtomicBool>) {
+async fn start_chat_loop(api_key: &str, typing_delay: Duration, running: Arc<AtomicBool>, context_mode: bool) {
     println!("Welcome to gpterm!");
 
     let mut messages: Vec<Message> = Vec::new();
     
     loop {
         let mut assistant_response = String::from("");
-
-        print!("〉");
+        
+        print!("\n〉");
         io::stdout().flush().unwrap();
 
         let mut input = String::new();
@@ -41,12 +41,20 @@ async fn start_chat_loop(api_key: &str, typing_delay: Duration, running: Arc<Ato
             break;
         }
 
+        // Remove history if in no-context mode
+        if !context_mode{
+            messages.clear();
+        }
+
+        // Keep some history if in context mode
+        if messages.len() > 10 {
+            messages.remove(0);
+            messages.remove(0);
+        }
+
         messages.push(Message { role: String::from("user"), content: input });
-
         send_gpt_request(messages.clone(), api_key, API_URL, typing_delay, &running, &mut assistant_response).await;
-
         messages.push(Message { role: String::from("assistant"), content: assistant_response })
-
     }
 }
 
@@ -54,10 +62,24 @@ async fn start_chat_loop(api_key: &str, typing_delay: Duration, running: Arc<Ato
 
 #[tokio::main]
 async fn main() {
+
     dotenv().ok();
     let api_key = match env::var("API_KEY") {
         Ok(value) => value,
         Err(_) => panic!("API_KEY must be set"),
+    };
+
+    let context_mode = match env::var("CONTEXT") {
+        Ok(value) => {
+            if value == String::from("true") {
+                true
+            }else if value == String::from("false"){
+                false
+            }else{
+                panic!("Invalid context mode");
+            }
+        },
+        Err(_) => false,
     };
 
     let typing_delay = Duration::from_millis(10);
@@ -75,5 +97,5 @@ async fn main() {
     }).expect("Error setting Ctrl+C handler");
 
 
-    start_chat_loop(&api_key, typing_delay, running).await ;
+    start_chat_loop(&api_key, typing_delay, running, context_mode).await ;
 }
