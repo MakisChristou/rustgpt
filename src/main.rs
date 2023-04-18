@@ -1,5 +1,6 @@
 use chrono::Local;
 use dotenv::dotenv;
+use reedline::{Reedline, DefaultPrompt, FileBackedHistory, Prompt};
 use std::env;
 
 use std::process::exit;
@@ -44,10 +45,28 @@ async fn start_chat_loop(
 
     println!("Welcome to gpterm!");
 
+    let mut got_ctrl_c = false;
+    let history = Box::new(
+        FileBackedHistory::with_file(5, log_dir.join("history.txt"))
+          .expect("Error configuring history with file"),
+      );
+    let mut line_editor = Reedline::create().with_history(history);
+
     loop {
         let mut assistant_response = String::from("");
 
-        let input = get_user_input();
+        let user_input = get_user_input(&mut line_editor);
+
+        if user_input == None {
+            if got_ctrl_c {
+                break;
+            }
+            got_ctrl_c = true;
+            continue;
+        }
+
+        let input = user_input.unwrap();
+
 
         // Remove history if in no-context mode
         if !context_mode {
@@ -67,7 +86,7 @@ async fn start_chat_loop(
                 &format!(
                     "{} user: {}\n",
                     Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
-                    input
+                    input,
                 ),
             ) {
                 eprintln!("Error saving conversation log: {}", e);
