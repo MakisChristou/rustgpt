@@ -1,6 +1,6 @@
 use chrono::Local;
 use dotenv::dotenv;
-use reedline::{Reedline, DefaultPrompt, FileBackedHistory, Prompt};
+use reedline::{FileBackedHistory, Reedline};
 use std::env;
 
 use std::process::exit;
@@ -33,8 +33,6 @@ async fn start_chat_loop(
         }
     };
 
-    let conversation_id = "history";
-
     if store_messages {
         println!("Storing conversations in {:?}", log_dir.display());
     }
@@ -47,14 +45,13 @@ async fn start_chat_loop(
 
     let mut got_ctrl_c = false;
     let history = Box::new(
-        FileBackedHistory::with_file(5, log_dir.join("history.txt"))
-          .expect("Error configuring history with file"),
-      );
+        FileBackedHistory::with_file(1_000_000, log_dir.join("history.txt"))
+            .expect("Error configuring history with file"),
+    );
     let mut line_editor = Reedline::create().with_history(history);
 
     loop {
         let mut assistant_response = String::from("");
-
         let user_input = get_user_input(&mut line_editor);
 
         if user_input == None {
@@ -66,7 +63,6 @@ async fn start_chat_loop(
         }
 
         let input = user_input.unwrap();
-
 
         // Remove history if in no-context mode
         if !context_mode {
@@ -82,7 +78,7 @@ async fn start_chat_loop(
         if store_messages {
             if let Err(e) = save_conversation_log(
                 &log_dir,
-                conversation_id,
+                "history",
                 &format!(
                     "{} user: {}\n",
                     Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
@@ -111,7 +107,7 @@ async fn start_chat_loop(
         if store_messages {
             if let Err(e) = save_conversation_log(
                 &log_dir,
-                conversation_id,
+                "history",
                 &format!(
                     "{} assistant: {}\n",
                     Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
@@ -134,7 +130,7 @@ async fn main() {
     dotenv().ok();
     let api_key = match env::var("API_KEY") {
         Ok(value) => value,
-        Err(_) => panic!("API_KEY must be set"),
+        Err(_) => panic!("API_KEY must be set, create a .env file and set API_KEY=<your_key>"),
     };
 
     let context_mode = match env::var("CONTEXT") {
@@ -172,7 +168,6 @@ async fn main() {
         if !r.load(Ordering::SeqCst) {
             exit(0);
         }
-
         r.store(false, Ordering::SeqCst);
     })
     .expect("Error setting Ctrl+C handler");

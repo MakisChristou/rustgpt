@@ -1,4 +1,5 @@
 use directories::ProjectDirs;
+use reedline::{Prompt, PromptEditMode, PromptHistorySearch, Reedline, Signal};
 use std::borrow::Cow;
 use std::io::{self};
 use std::path::PathBuf;
@@ -6,7 +7,6 @@ use std::{
     fs::{self, OpenOptions},
     io::Write,
 };
-use reedline::{DefaultPrompt, Reedline, Signal, Prompt, PromptHistorySearch, PromptEditMode};
 
 struct MyPrompt {}
 
@@ -35,10 +35,8 @@ impl Prompt for MyPrompt {
     }
 }
 
-
 pub fn get_user_input(line_editor: &mut Reedline) -> Option<String> {
-
-    let prompt = MyPrompt{};
+    let prompt = MyPrompt {};
 
     loop {
         let sig: Result<Signal, io::Error> = line_editor.read_line(&prompt);
@@ -48,7 +46,7 @@ pub fn get_user_input(line_editor: &mut Reedline) -> Option<String> {
             }
             Ok(reedline::Signal::CtrlC) | Ok(reedline::Signal::CtrlD) => {
                 return None;
-            },
+            }
             Err(e) => panic!("An error occured: {}", e),
         }
     }
