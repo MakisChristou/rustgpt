@@ -31,13 +31,12 @@ impl Prompt for MyPrompt {
         &self,
         _history_search: PromptHistorySearch,
     ) -> Cow<str> {
-        Cow::Borrowed("")
+        Cow::Borrowed("Search: ")
     }
 }
 
 pub fn get_user_input(line_editor: &mut Reedline) -> Option<String> {
-    let prompt = MyPrompt {};
-
+    let prompt: MyPrompt = MyPrompt {};
     loop {
         let sig: Result<Signal, io::Error> = line_editor.read_line(&prompt);
         match sig {

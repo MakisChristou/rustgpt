@@ -56,6 +56,7 @@ async fn start_chat_loop(
 
         if user_input == None {
             if got_ctrl_c {
+                println!("Goodbye!");
                 break;
             }
             got_ctrl_c = true;

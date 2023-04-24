@@ -9,6 +9,11 @@ Yet another command-line chat GPT frontend written in Rust.
 * Context aware conversation
 * Simple and minimal
 
+## Prompt Shortcuts
+* Search History `CTRL + R`
+* Clear Prompt `CTRL + L`
+* Exit `CTRL + C` twice
+
 ## Future Features
 * Multiline input
 * Syntax highlighting
