@@ -8,6 +8,7 @@ Yet another command-line chat GPT frontend written in Rust.
 * Store chat messages/history
 * Context aware conversation
 * Simple and minimal
+* Multiline mode (use `{}` to enter multiline mode)
 
 ## Prompt Shortcuts
 * Search History `CTRL + R`
@@ -15,9 +16,10 @@ Yet another command-line chat GPT frontend written in Rust.
 * Exit `CTRL + C` twice
 
 ## Future Features
-* Multiline input
+* ~~Multiline input~~
 * Syntax highlighting
-* Custom model
+* Choose model/role
+* Add Jailbreaks
 
 ## Build
 1. Clone the repository to your local machine.

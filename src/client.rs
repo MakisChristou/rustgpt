@@ -7,6 +7,10 @@ use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
+use syntect::easy::HighlightLines;
+use syntect::highlighting::{Style, ThemeSet};
+use syntect::parsing::SyntaxSet;
+use syntect::util::{as_24_bit_terminal_escaped, LinesWithEndings};
 use tokio::time::sleep;
 
 #[derive(Debug, Deserialize)]
@@ -161,6 +165,10 @@ pub async fn send_gpt_request(
     }
 }
 
+fn count_occurrences(haystack: &str, needle: &str) -> usize {
+    haystack.matches(needle).count()
+}
+
 async fn handle_response(
     gpt_response: GptResponse,
     typing_delay: Duration,
@@ -170,7 +178,13 @@ async fn handle_response(
     match msg {
         Some(msg) => {
             assistant_response.push_str(msg);
-            print_as_typing(msg, typing_delay).await;
+
+            // Highlight
+            if count_occurrences(&assistant_response, "```") % 2 != 0 {
+                print_as_typing(msg, typing_delay, true).await;
+            } else {
+                print_as_typing(msg, typing_delay, false).await;
+            }
         }
         None => (),
     }
@@ -193,10 +207,35 @@ fn handle_error(json: Value) {
     }
 }
 
-async fn print_as_typing(s: &str, delay: Duration) {
-    for c in s.chars() {
-        print!("{}", c);
-        std::io::stdout().flush().unwrap();
-        sleep(delay).await;
+async fn print_as_typing(s: &str, delay: Duration, highlight: bool) {
+    let mut escaped = String::from(s);
+
+    if highlight {
+        // Load these once at the start of your program
+        let ps = SyntaxSet::load_defaults_newlines();
+        let ts = ThemeSet::load_defaults();
+
+        let syntax = ps.find_syntax_by_extension("rs").unwrap();
+        let mut h = HighlightLines::new(syntax, &ts.themes["base16-ocean.dark"]);
+        // let s = r##"Hello"##;
+
+        for line in LinesWithEndings::from(s) {
+            // let ranges: Vec<(Style, &str)> = h.highlight_line(line, &ps).unwrap();
+            // let escaped = as_24_bit_terminal_escaped(&ranges[..], true);
+
+            // print!("{}", escaped);
+            // std::io::stdout().flush().unwrap();
+            for c in escaped.chars() {
+                print!("{}", c);
+                std::io::stdout().flush().unwrap();
+                sleep(delay).await;
+            }
+        }
+    } else {
+        for c in s.chars() {
+            print!("{}", c);
+            std::io::stdout().flush().unwrap();
+            sleep(delay).await;
+        }
     }
 }

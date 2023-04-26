@@ -1,6 +1,6 @@
 use chrono::Local;
 use dotenv::dotenv;
-use reedline::{FileBackedHistory, Reedline};
+use reedline::{FileBackedHistory,Reedline};
 use std::env;
 
 use std::process::exit;
@@ -12,9 +12,11 @@ const API_URL: &str = "https://api.openai.com/v1/chat/completions";
 
 mod client;
 mod utils;
+mod validator;
 
 use crate::client::{send_gpt_request, Message};
 use crate::utils::{get_log_directory, get_user_input, save_conversation_log};
+use crate::validator::ReplValidator;
 
 async fn start_chat_loop(
     api_key: &str,
@@ -48,7 +50,11 @@ async fn start_chat_loop(
         FileBackedHistory::with_file(1_000_000, log_dir.join("history.txt"))
             .expect("Error configuring history with file"),
     );
-    let mut line_editor = Reedline::create().with_history(history);
+    let mut line_editor = Reedline::create()
+        .with_history(history)
+        .with_quick_completions(true)
+        .with_partial_completions(true)
+        .with_validator(Box::new(ReplValidator)); // if you want your prompt to support multiline mode it has to add the validator
 
     loop {
         let mut assistant_response = String::from("");
@@ -60,6 +66,7 @@ async fn start_chat_loop(
                 break;
             }
             got_ctrl_c = true;
+            println!("Click CTRL + C again to exit");
             continue;
         }
 
@@ -71,6 +78,7 @@ async fn start_chat_loop(
         }
 
         // Keep some history if in context mode
+        // This needs to be improved based on the tokens a model can handle
         if messages.len() > 10 {
             messages.remove(0);
             messages.remove(0);
@@ -95,6 +103,7 @@ async fn start_chat_loop(
             content: input,
         });
 
+        // Send user input to OpenAPI Backend
         send_gpt_request(
             messages.clone(),
             api_key,
