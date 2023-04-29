@@ -1,8 +1,9 @@
 use chrono::Local;
 use dotenv::dotenv;
-use reedline::{FileBackedHistory,Reedline};
+use reedline::{FileBackedHistory, Reedline};
 use std::env;
 
+use std::path::PathBuf;
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -18,12 +19,27 @@ use crate::client::{send_gpt_request, Message};
 use crate::utils::{get_log_directory, get_user_input, save_conversation_log};
 use crate::validator::ReplValidator;
 
+fn print_intro_message(store_messages: bool, context_mode: bool, log_dir: PathBuf, model: &str) {
+    println!("Welcome to gpterm!");
+    if store_messages {
+        println!("Storing conversations in {:?}", log_dir.display());
+    }
+
+    if context_mode {
+        println!("Context mode is enabled");
+    }
+    println!("Using {} model", model);
+    println!(""); 
+}
+
+
 async fn start_chat_loop(
     api_key: &str,
     typing_delay: Duration,
     running: Arc<AtomicBool>,
     context_mode: bool,
     store_messages: bool,
+    model: &str,
 ) {
     let mut messages: Vec<Message> = Vec::new();
 
@@ -35,15 +51,7 @@ async fn start_chat_loop(
         }
     };
 
-    if store_messages {
-        println!("Storing conversations in {:?}", log_dir.display());
-    }
-
-    if context_mode {
-        println!("Using context mode");
-    }
-
-    println!("Welcome to gpterm!");
+    print_intro_message(store_messages, context_mode, log_dir.clone(), &model);
 
     let mut got_ctrl_c = false;
     let history = Box::new(
@@ -108,6 +116,7 @@ async fn start_chat_loop(
             messages.clone(),
             api_key,
             API_URL,
+            model,
             typing_delay,
             &running,
             &mut assistant_response,
@@ -169,7 +178,26 @@ async fn main() {
         Err(_) => false,
     };
 
-    let typing_delay = Duration::from_millis(10);
+    let model = match env::var("MODEL") {
+        Ok(value) => match &value[..] {
+            "gpt-4" | "gpt-4-0314" | "gpt-4-32k" | "gpt-4-32k-0314" | "gpt-3.5-turbo"
+            | "gpt-3.5-turbo-0301" => value,
+            _ => {
+                panic!("Invalid model");
+            }
+        },
+        Err(e) => String::from("gpt-3.5-turbo"),
+    };
+
+    let typing_delay: Duration = match env::var("TYPING_DELAY") {
+        Ok(value) => match value.parse() {
+            Ok(num) => Duration::from_millis(num),
+            Err(e) => {
+                panic!("Typing delay must be u32");
+            }
+        },
+        Err(e) => Duration::from_millis(10),
+    };
 
     // Set up the signal handler
     let running = Arc::new(AtomicBool::new(true));
@@ -188,6 +216,7 @@ async fn main() {
         running,
         context_mode,
         store_messages,
+        &model[..],
     )
     .await;
 }

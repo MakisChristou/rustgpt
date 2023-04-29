@@ -53,7 +53,8 @@ To exit the program simply Ctrl + C twice.
 
 ## Configuration Options
 
-- `API_KEY`: (Mandatory) Set this to your chat gpt api key
+- `API_KEY`: Set this to your chat gpt api key
 - `CONTEXT`:  (Optional) Set this to `true` if you want to keep context in your conversation. Default `false`.
 - `HISTORY`: (Optional) Set this to `true` if you want to store your chat history. Default `false`.
-
+- `MODEL`: (Optional) Set this to any of the models supported by OpenAI (`gpt-4`, `gpt-4-0314`, `gpt-4-32k`, `gpt-4-32k-0314`, `gpt-3.5-turbo`, `gpt-3.5-turbo-0301`) Default `gpt-3.5-turbo`
+- `TYPING_DELAY`: (Optional) Set the delay between each letter in milliseconds (Default `10`)
