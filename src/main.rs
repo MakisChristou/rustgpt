@@ -186,17 +186,17 @@ async fn main() {
                 panic!("Invalid model");
             }
         },
-        Err(e) => String::from("gpt-3.5-turbo"),
+        Err(_e) => String::from("gpt-3.5-turbo"),
     };
 
     let typing_delay: Duration = match env::var("TYPING_DELAY") {
         Ok(value) => match value.parse() {
             Ok(num) => Duration::from_millis(num),
-            Err(e) => {
+            Err(_e) => {
                 panic!("Typing delay must be u32");
             }
         },
-        Err(e) => Duration::from_millis(10),
+        Err(_e) => Duration::from_millis(10),
     };
 
     // Set up the signal handler
