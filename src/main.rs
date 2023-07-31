@@ -20,7 +20,7 @@ use crate::utils::{get_log_directory, get_user_input, save_conversation_log};
 use crate::validator::ReplValidator;
 
 fn print_intro_message(store_messages: bool, context_mode: bool, log_dir: PathBuf, model: &str) {
-    println!("Welcome to gpterm!");
+    println!("Welcome to rustgpt!");
     if store_messages {
         println!("Storing conversations in {:?}", log_dir.display());
     }

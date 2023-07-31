@@ -67,7 +67,7 @@ pub fn save_conversation_log(
 }
 
 pub fn get_log_directory() -> Result<PathBuf, std::io::Error> {
-    let project_dirs = ProjectDirs::from("com", "makischristou", "gpterm")
+    let project_dirs = ProjectDirs::from("com", "makischristou", "rustgpt")
         .expect("Unable to determine log directory");
 
     let log_dir = project_dirs.data_local_dir().join("logs");

@@ -1,6 +1,6 @@
 [package]
 name = "rustgpt"
-version = "0.1.0"
+version = "0.1.1"
 description = "Yet another command-line chat GPT frontend written in Rust."
 authors = ["Makis Christou <makis_christou@protonmail.com>"]
 edition = "2021"

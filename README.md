@@ -1,4 +1,4 @@
-# gpterm
+# rustgpt
 Yet another command-line chat GPT frontend written in Rust.
 
 ![Example Usage](https://user-images.githubusercontent.com/39631552/232221182-d0d8409f-ff76-4bad-b909-77c9ff44740b.gif)
