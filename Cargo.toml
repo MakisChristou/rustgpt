@@ -1,5 +1,5 @@
 [package]
-name = "gpterm"
+name = "rustgpt"
 version = "0.1.0"
 description = "Yet another command-line chat GPT frontend written in Rust."
 authors = ["Makis Christou <makis_christou@protonmail.com>"]
