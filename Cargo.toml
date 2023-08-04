@@ -1,6 +1,6 @@
 [package]
 name = "rustgpt"
-version = "0.1.1"
+version = "0.1.2"
 description = "Yet another command-line chat GPT frontend written in Rust."
 authors = ["Makis Christou <makis_christou@protonmail.com>"]
 edition = "2021"
@@ -20,6 +20,7 @@ chrono = "0.4.24"
 reedline = "0.18.0"
 crossterm = "0.26.1"
 syntect = "5.0.0"
+clap = { version = "4.3.19", features = ["derive"] }
 
 [dependencies.reqwest]
 version = "0.11.12"

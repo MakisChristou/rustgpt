@@ -1,4 +1,5 @@
 use chrono::Local;
+use clap::Parser;
 use dotenv::dotenv;
 use reedline::{FileBackedHistory, Reedline};
 use std::env;
@@ -11,10 +12,12 @@ use std::time::Duration;
 
 const API_URL: &str = "https://api.openai.com/v1/chat/completions";
 
+mod args;
 mod client;
 mod utils;
 mod validator;
 
+use crate::args::Args;
 use crate::client::{send_gpt_request, Message};
 use crate::utils::{get_log_directory, get_user_input, save_conversation_log};
 use crate::validator::ReplValidator;
@@ -29,9 +32,8 @@ fn print_intro_message(store_messages: bool, context_mode: bool, log_dir: PathBu
         println!("Context mode is enabled");
     }
     println!("Using {} model", model);
-    println!(""); 
+    println!("");
 }
-
 
 async fn start_chat_loop(
     api_key: &str,
@@ -146,6 +148,8 @@ async fn start_chat_loop(
 
 #[tokio::main]
 async fn main() {
+    let _ = Args::parse();
+
     dotenv().ok();
     let api_key = match env::var("API_KEY") {
         Ok(value) => value,
